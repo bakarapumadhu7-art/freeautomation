@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Python environments
+venv/
+.venv/
+env/
+__pycache__/
+*.pyc
+
+# Environment secrets & session dumps
+.env
+instagrapi_session.json
+*.db
+*.sqlite3
+
+# Build outputs & caches
+dist/
+dist-ssr/
+.cache/
+.DS_Store
