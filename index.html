@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ANTIGRAVITY — Creator Referral & Comment Automation Ecosystem</title>
+  
+  <!-- Google Fonts: Space Grotesk, Inter, JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            void: "#030712",
+            obsidian: "#080c14",
+            neon: {
+              cyan: "#00f0ff",
+              magenta: "#ff007f",
+              violet: "#a855f7",
+              emerald: "#10b981",
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            display: ['Space Grotesk', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Three.js CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+  <style>
+    body {
+      background-color: #030712;
+      color: #f1f5f9;
+      font-family: 'Inter', sans-serif;
+      overflow-x: hidden;
+      margin: 0;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+      font-family: 'Space Grotesk', sans-serif;
+      letter-spacing: -0.03em;
+    }
+
+    /* Strict Dark Glassmorphism */
+    .glass-panel {
+      background: rgba(8, 12, 20, 0.68);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+
+    .glass-panel-neon {
+      background: rgba(10, 15, 26, 0.78);
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
+      border: 1px solid rgba(0, 240, 255, 0.3);
+      box-shadow: 0 20px 50px rgba(0, 240, 255, 0.06), inset 0 1px 0 rgba(0, 240, 255, 0.2);
+    }
+
+    .glass-card {
+      background: rgba(15, 23, 42, 0.45);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .glass-card:hover {
+      background: rgba(15, 23, 42, 0.75);
+      border-color: rgba(0, 240, 255, 0.4);
+      transform: translateY(-2px);
+    }
+
+    #bg-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 0;
+    }
+  </style>
+</head>
+<body class="bg-void text-slate-100 selection:bg-neon-cyan selection:text-black">
+
+  <!-- 1. Global Three.js Background Canvas -->
+  <div id="bg-canvas"></div>
+
+  <!-- 2. Main Glassmorphic Dashboard Interface -->
+  <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-8 py-10 pointer-events-auto">
+    
+    <!-- Top Kinetic Bar -->
+    <header class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 pb-6 border-b border-white/10">
+      <div>
+        <div className="flex items-center gap-4 flex" style="display: flex; align-items: center; gap: 16px;">
+          <!-- 3D Micro-Geometry Brand Anchor (Rotating Wireframe Octahedron) -->
+          <div class="w-11 h-11 rounded-xl overflow-hidden glass-panel border border-cyan-400/40 flex items-center justify-center">
+            <canvas id="micro-brand-canvas" width="44" height="44"></canvas>
+          </div>
+          <div>
+            <span class="font-mono text-[11px] tracking-[0.25em] text-cyan-400 uppercase block">
+              [ ECOSYSTEM CORE // V3.2 ]
+            </span>
+            <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tighter text-white">
+              ANTIGRAVITY
+            </h1>
+          </div>
+        </div>
+      </div>
+
+      <!-- Kinetic Status & Adapter Switcher -->
+      <div class="flex flex-wrap items-center gap-4">
+        <div class="glass-panel px-4 py-2 rounded-xl border border-white/10 flex items-center gap-3">
+          <!-- 3D Pulsing Status Indicator -->
+          <div class="w-5 h-5 rounded-md overflow-hidden">
+            <canvas id="micro-status-canvas" width="20" height="20"></canvas>
+          </div>
+          <div>
+            <span class="font-mono text-[9px] uppercase tracking-widest text-slate-400 block">
+              INGESTION ENGINE
+            </span>
+            <span id="backend-status-indicator" class="font-mono text-xs font-bold text-emerald-400 tracking-wide">
+              ONLINE (0.0ms)
+            </span>
+          </div>
+        </div>
+
+        <div class="glass-panel p-1 rounded-xl border border-white/10 flex items-center">
+          <button
+            id="btn-adapter-graph"
+            onclick="setMode('GRAPH_API')"
+            class="px-3.5 py-1.5 rounded-lg font-mono text-[10px] tracking-wider transition-all bg-cyan-400 text-black font-bold shadow-lg shadow-cyan-400/20"
+          >
+            META_GRAPH_API
+          </button>
+          <button
+            id="btn-adapter-instagrapi"
+            onclick="setMode('INSTAGRAPI')"
+            class="px-3.5 py-1.5 rounded-lg font-mono text-[10px] tracking-wider transition-all text-slate-400 hover:text-white"
+          >
+            INSTAGRAPI_FALLBACK
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Grid: Telemetry, Trigger Architecture & Link-in-Bio Pipeline -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      
+      <!-- Left Column: Metrics & Trigger Architecture (8 Cols) -->
+      <div class="lg:col-span-8 flex flex-col gap-8">
+        
+        <!-- Real-Time Conversion & Throughput Metrics -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          
+          <!-- Card 1: Total DMs Dispatched -->
+          <div class="glass-panel p-6 rounded-2xl relative overflow-hidden group">
+            <div class="absolute top-4 right-4 w-12 h-12">
+              <canvas id="card-geo-1" width="48" height="48"></canvas>
+            </div>
+            <span class="font-mono text-[10px] tracking-[0.2em] text-slate-400 uppercase block mb-1">
+              TOTAL_CONVERSIONS
+            </span>
+            <div id="stat-conversions" class="text-4xl font-extrabold text-white tracking-tight mb-2 font-display">
+              48,290
+            </div>
+            <div class="font-mono text-[11px] text-cyan-400 flex items-center gap-1.5">
+              <span>+312%</span>
+              <span class="text-slate-500">VS MANUAL BIO</span>
+            </div>
+          </div>
+
+          <!-- Card 2: Outbound Click-Through Rate -->
+          <div class="glass-panel p-6 rounded-2xl relative overflow-hidden group">
+            <div class="absolute top-4 right-4 w-12 h-12">
+              <canvas id="card-geo-2" width="48" height="48"></canvas>
+            </div>
+            <span class="font-mono text-[10px] tracking-[0.2em] text-slate-400 uppercase block mb-1">
+              OUTBOUND_CTR
+            </span>
+            <div class="text-4xl font-extrabold text-white tracking-tight mb-2 font-display">
+              74.8%
+            </div>
+            <div class="font-mono text-[11px] text-pink-500 flex items-center gap-1.5">
+              <span>HIGH_INTENT</span>
+              <span class="text-slate-500">CLAUDE_SYNTHESIS</span>
+            </div>
+          </div>
+
+          <!-- Card 3: NLP Inference Latency -->
+          <div class="glass-panel p-6 rounded-2xl relative overflow-hidden group">
+            <div class="absolute top-4 right-4 w-12 h-12">
+              <canvas id="card-geo-3" width="48" height="48"></canvas>
+            </div>
+            <span class="font-mono text-[10px] tracking-[0.2em] text-slate-400 uppercase block mb-1">
+              GEMINI_LATENCY
+            </span>
+            <div class="text-4xl font-extrabold text-white tracking-tight mb-2 font-display">
+              195ms
+            </div>
+            <div class="font-mono text-[11px] text-purple-400 flex items-center gap-1.5">
+              <span>ASYNC_QUEUE</span>
+              <span class="text-slate-500">ZERO_TIMEOUT</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Active Trigger Pipelines (Superprofile/Zorcha Style) -->
+        <div class="glass-panel p-7 rounded-3xl border border-white/10">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-white/10">
+            <div>
+              <span class="font-mono text-[10px] tracking-[0.25em] text-cyan-400 uppercase block">
+                AUTOMATION RULES
+              </span>
+              <h2 class="text-xl font-bold text-white tracking-tight">
+                ACTIVE_TRIGGER_MATRICES
+              </h2>
+            </div>
+            <button
+              id="btn-simulate"
+              onclick="simulateCommentSpike()"
+              class="px-4 py-2 rounded-xl bg-cyan-400/10 hover:bg-cyan-400/20 border border-cyan-400/40 font-mono text-xs font-semibold text-cyan-400 tracking-wider transition-all self-start sm:self-center"
+            >
+              [ SIMULATE_COMMENT_SPIKE ]
+            </button>
+          </div>
+
+          <div class="space-y-3">
+            <!-- Trigger 1 -->
+            <div class="glass-card p-4 rounded-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div class="flex items-center gap-3">
+                <span class="font-mono text-xs font-bold px-3 py-1 rounded-lg bg-cyan-400/10 text-cyan-400 border border-cyan-400/30">
+                  /COURSE
+                </span>
+                <div>
+                  <div class="text-sm font-semibold text-white tracking-tight">
+                    REEL #984 — Systems Architecture at Scale
+                  </div>
+                  <div class="font-mono text-[11px] text-slate-400">
+                    antigrav.link/r/sys99 <span class="text-slate-600">➔</span> masterclass.dev/systems
+                  </div>
+                </div>
+              </div>
+              <div class="flex items-center gap-6 self-end md:self-center">
+                <div class="text-right">
+                  <span class="font-mono text-[10px] text-slate-500 block uppercase">CLICKS</span>
+                  <span class="font-mono text-sm font-bold text-slate-200">1,420</span>
+                </div>
+                <div class="text-right">
+                  <span class="font-mono text-[10px] text-slate-500 block uppercase">CTR</span>
+                  <span class="font-mono text-sm font-bold text-emerald-400">81.4%</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Trigger 2 -->
+            <div class="glass-card p-4 rounded-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div class="flex items-center gap-3">
+                <span class="font-mono text-xs font-bold px-3 py-1 rounded-lg bg-cyan-400/10 text-cyan-400 border border-cyan-400/30">
+                  /PROMPT
+                </span>
+                <div>
+                  <div class="text-sm font-semibold text-white tracking-tight">
+                    POST #842 — Top 10 Autonomous Coding Workflows
+                  </div>
+                  <div class="font-mono text-[11px] text-slate-400">
+                    antigrav.link/r/pr88 <span class="text-slate-600">➔</span> gumroad.com/l/prompts
+                  </div>
+                </div>
+              </div>
+              <div class="flex items-center gap-6 self-end md:self-center">
+                <div class="text-right">
+                  <span class="font-mono text-[10px] text-slate-500 block uppercase">CLICKS</span>
+                  <span class="font-mono text-sm font-bold text-slate-200">3,120</span>
+                </div>
+                <div class="text-right">
+                  <span class="font-mono text-[10px] text-slate-500 block uppercase">CTR</span>
+                  <span class="font-mono text-sm font-bold text-emerald-400">76.2%</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Trigger 3 -->
+            <div class="glass-card p-4 rounded-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div class="flex items-center gap-3">
+                <span class="font-mono text-xs font-bold px-3 py-1 rounded-lg bg-pink-500/10 text-pink-400 border border-pink-500/30">
+                  /VIP
+                </span>
+                <div>
+                  <div class="text-sm font-semibold text-white tracking-tight">
+                    GLOBAL_ACCOUNT_TRIGGER (Monitors All Media)
+                  </div>
+                  <div class="font-mono text-[11px] text-slate-400">
+                    antigrav.link/r/vip01 <span class="text-slate-600">➔</span> skool.com/antigravity-vip
+                  </div>
+                </div>
+              </div>
+              <div class="flex items-center gap-6 self-end md:self-center">
+                <div class="text-right">
+                  <span class="font-mono text-[10px] text-slate-500 block uppercase">CLICKS</span>
+                  <span class="font-mono text-sm font-bold text-slate-200">890</span>
+                </div>
+                <div class="text-right">
+                  <span class="font-mono text-[10px] text-slate-500 block uppercase">CTR</span>
+                  <span class="font-mono text-sm font-bold text-emerald-400">89.1%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Real-Time Ingested Event Feed -->
+        <div class="glass-panel p-7 rounded-3xl border border-white/10">
+          <span class="font-mono text-[10px] tracking-[0.25em] text-pink-500 uppercase block mb-1">
+            LIVE_EVENT_PIPELINE
+          </span>
+          <h3 class="text-lg font-bold text-white mb-4">
+            STREAMED_WEBHOOK_TRANSACTIONS
+          </h3>
+
+          <div id="events-container" class="space-y-2.5">
+            <!-- Event 1 -->
+            <div class="p-3.5 rounded-xl bg-slate-950/60 border border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div class="flex items-center gap-3">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping inline-block"></span>
+                <div>
+                  <span class="font-mono text-xs text-cyan-400">@dev_alex</span>
+                  <p class="text-xs text-slate-300 mt-0.5">
+                    "Send me the full course link please!"
+                  </p>
+                </div>
+              </div>
+              <div class="flex items-center gap-3 font-mono text-[10px] text-slate-400">
+                <span class="px-2 py-0.5 rounded bg-slate-800 text-slate-300">CONF: 0.99</span>
+                <span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">DISPATCHED (240ms)</span>
+              </div>
+            </div>
+
+            <!-- Event 2 -->
+            <div class="p-3.5 rounded-xl bg-slate-950/60 border border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div class="flex items-center gap-3">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping inline-block"></span>
+                <div>
+                  <span class="font-mono text-xs text-cyan-400">@sarah_ai</span>
+                  <p class="text-xs text-slate-300 mt-0.5">
+                    "Where can I get the prompt bundle?"
+                  </p>
+                </div>
+              </div>
+              <div class="flex items-center gap-3 font-mono text-[10px] text-slate-400">
+                <span class="px-2 py-0.5 rounded bg-slate-800 text-slate-300">CONF: 0.97</span>
+                <span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">DISPATCHED (198ms)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right Column: High-Conversion Link-in-Bio Canvas Node (4 Cols) -->
+      <div class="lg:col-span-4 flex flex-col gap-8">
+        
+        <div class="glass-panel-neon p-7 rounded-3xl relative overflow-hidden">
+          <div class="flex items-center justify-between mb-4">
+            <span class="font-mono text-[10px] tracking-[0.25em] text-cyan-400 uppercase">
+              HYBRID_NODE
+            </span>
+            <span class="font-mono text-[10px] px-2 py-0.5 rounded bg-cyan-400/20 text-cyan-400 border border-cyan-400/40">
+              ACTIVE
+            </span>
+          </div>
+
+          <h2 class="text-2xl font-extrabold text-white tracking-tight mb-2">
+            CREATOR_BIO_ROUTER
+          </h2>
+          <p class="text-xs text-slate-300 leading-relaxed mb-6 font-normal">
+            Unified link-in-bio architecture with automatic comment-to-DM link handoffs and click-telemetry wrapping.
+          </p>
+
+          <div class="space-y-3 mb-6">
+            <div class="glass-card p-4 rounded-2xl group cursor-pointer border border-white/10 hover:border-cyan-400">
+              <div class="flex items-center justify-between mb-1">
+                <span class="font-mono text-[11px] font-bold text-white group-hover:text-cyan-400 transition-colors">
+                  SYSTEMS_DESIGN_VIP_COMMUNITY
+                </span>
+                <span class="font-mono text-[9px] text-pink-400 tracking-wider">
+                  [68% CONVERSION]
+                </span>
+              </div>
+              <p class="text-[11px] text-slate-400">
+                Private engineering mastermind & live workshops
+              </p>
+            </div>
+
+            <div class="glass-card p-4 rounded-2xl group cursor-pointer border border-white/10 hover:border-cyan-400">
+              <div class="flex items-center justify-between mb-1">
+                <span class="font-mono text-[11px] font-bold text-white group-hover:text-cyan-400 transition-colors">
+                  PROMPT_ENGINEERING_PLAYBOOK
+                </span>
+                <span class="font-mono text-[9px] text-cyan-400 tracking-wider">
+                  [HOT_PRODUCT]
+                </span>
+              </div>
+              <p class="text-[11px] text-slate-400">
+                Production agents & evaluation benchmarks
+              </p>
+            </div>
+
+            <div class="glass-card p-4 rounded-2xl group cursor-pointer border border-white/10 hover:border-cyan-400">
+              <div class="flex items-center justify-between mb-1">
+                <span class="font-mono text-[11px] font-bold text-white group-hover:text-cyan-400 transition-colors">
+                  BOOK_1_ON_1_ADVISORY_CALL
+                </span>
+                <span class="font-mono text-[9px] text-purple-400 tracking-wider">
+                  [LIMITED_SLOTS]
+                </span>
+              </div>
+              <p class="text-[11px] text-slate-400">
+                Direct fractional architecture & scaling reviews
+              </p>
+            </div>
+          </div>
+
+          <div class="p-4 rounded-2xl bg-black/50 border border-white/5 font-mono text-[10px] text-slate-400 leading-relaxed">
+            <span class="text-cyan-400 font-bold block mb-1">// DUAL_ENGINE_PIPELINE</span>
+            Comments ingested via Flask webhook ➔ Offloaded to Celery queue ➔ Classified by Gemini NLP ➔ Synthesized by Claude ➔ Dispatched via Graph API / Instagrapi.
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Scripts: Global Three.js Scene & Interactive Micro-3D Viewports -->
+  <script>
+    // -------------------------------------------------------------------------
+    // 1. Global Three.js Background Canvas
+    // -------------------------------------------------------------------------
+    const bgContainer = document.getElementById('bg-canvas');
+    const bgScene = new THREE.Scene();
+    const bgCamera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
+    bgCamera.position.set(0, 0, 5);
+
+    const bgRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    bgRenderer.setSize(window.innerWidth, window.innerHeight);
+    bgRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    bgContainer.appendChild(bgRenderer.domElement);
+
+    // Lights
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    bgScene.add(ambientLight);
+
+    const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+    dirLight.position.set(6, 8, 4);
+    bgScene.add(dirLight);
+
+    const cyanLight = new THREE.PointLight(0x00f0ff, 3.5, 12);
+    cyanLight.position.set(4, -2, -1);
+    bgScene.add(cyanLight);
+
+    const magentaLight = new THREE.PointLight(0xff007f, 3.0, 10);
+    magentaLight.position.set(-4, 2, -1);
+    bgScene.add(magentaLight);
+
+    // Reactive Soft Body Mesh
+    const softBodyGeo = new THREE.IcosahedronGeometry(1.6, 8);
+    const softBodyMat = new THREE.MeshStandardMaterial({
+      color: 0x080e1a,
+      emissive: 0x00f0ff,
+      emissiveIntensity: 0.2,
+      roughness: 0.15,
+      metalness: 0.9,
+      wireframe: false
+    });
+    const softBody = new THREE.Mesh(softBodyGeo, softBodyMat);
+    softBody.position.set(2.2, 0.2, -1);
+    bgScene.add(softBody);
+
+    // Interactive Particle Field
+    const particleCount = 800;
+    const particlePositions = new Float32Array(particleCount * 3);
+    for (let i = 0; i < particleCount * 3; i += 3) {
+      particlePositions[i] = (Math.random() - 0.5) * 18;
+      particlePositions[i + 1] = (Math.random() - 0.5) * 14;
+      particlePositions[i + 2] = (Math.random() - 0.5) * 12 - 2;
+    }
+    const particleGeo = new THREE.BufferGeometry();
+    particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+    const particleMat = new THREE.PointsMaterial({
+      size: 0.04,
+      color: 0x00f0ff,
+      transparent: true,
+      opacity: 0.45,
+      blending: THREE.AdditiveBlending
+    });
+    const particles = new THREE.Points(particleGeo, particleMat);
+    bgScene.add(particles);
+
+    // Mouse Tracking
+    const mouse = { x: 0, y: 0, targetX: 0, targetY: 0 };
+    window.addEventListener('mousemove', (e) => {
+      mouse.targetX = (e.clientX / window.innerWidth) * 2 - 1;
+      mouse.targetY = -(e.clientY / window.innerHeight) * 2 + 1;
+    });
+
+    window.addEventListener('resize', () => {
+      bgCamera.aspect = window.innerWidth / window.innerHeight;
+      bgCamera.updateProjectionMatrix();
+      bgRenderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // -------------------------------------------------------------------------
+    // 2. Micro-3D Viewport Helper (Zero SVG/PNG Icon Constraint)
+    // -------------------------------------------------------------------------
+    function createMicroViewer(canvasId, geometry, color, isWireframe = true, scale = 1.0) {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas) return null;
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 10);
+      camera.position.z = 2.8;
+
+      const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+      renderer.setSize(canvas.width, canvas.height);
+
+      const light = new THREE.AmbientLight(0xffffff, 1.5);
+      scene.add(light);
+      const point = new THREE.PointLight(color, 2);
+      point.position.set(2, 2, 2);
+      scene.add(point);
+
+      const mat = new THREE.MeshStandardMaterial({
+        color: color,
+        emissive: color,
+        emissiveIntensity: 0.6,
+        wireframe: isWireframe,
+        metalness: 0.8,
+        roughness: 0.2
+      });
+      const mesh = new THREE.Mesh(geometry, mat);
+      mesh.scale.set(scale, scale, scale);
+      scene.add(mesh);
+
+      return { scene, camera, renderer, mesh };
+    }
+
+    const microBrand = createMicroViewer('micro-brand-canvas', new THREE.OctahedronGeometry(1, 0), 0x00f0ff, true, 1.2);
+    const microStatus = createMicroViewer('micro-status-canvas', new THREE.IcosahedronGeometry(1, 0), 0x10b981, true, 1.1);
+    const cardGeo1 = createMicroViewer('card-geo-1', new THREE.OctahedronGeometry(1, 0), 0x00f0ff, true, 1.2);
+    const cardGeo2 = createMicroViewer('card-geo-2', new THREE.TorusKnotGeometry(0.8, 0.25, 48, 12), 0xff007f, false, 0.8);
+    const cardGeo3 = createMicroViewer('card-geo-3', new THREE.IcosahedronGeometry(1, 0), 0xa855f7, true, 1.1);
+
+    // -------------------------------------------------------------------------
+    // 3. Animation Loop
+    // -------------------------------------------------------------------------
+    const clock = new THREE.Clock();
+
+    function animate() {
+      requestAnimationFrame(animate);
+      const delta = clock.getDelta();
+      const t = clock.getElapsedTime();
+
+      // Lerp mouse
+      mouse.x += (mouse.targetX - mouse.x) * 0.05;
+      mouse.y += (mouse.targetY - mouse.y) * 0.05;
+
+      // Rotate soft body & particles
+      softBody.rotation.x = mouse.y * 0.4;
+      softBody.rotation.y = mouse.x * 0.4 + t * 0.15;
+      softBody.position.y = Math.sin(t * 1.2) * 0.2;
+
+      particles.rotation.y = t * 0.02 + mouse.x * 0.05;
+      particles.rotation.x = mouse.y * 0.03;
+
+      bgRenderer.render(bgScene, bgCamera);
+
+      // Rotate Micro-3D Geometries
+      if (microBrand) {
+        microBrand.mesh.rotation.x += delta * 1.5;
+        microBrand.mesh.rotation.y += delta * 1.8;
+        microBrand.renderer.render(microBrand.scene, microBrand.camera);
+      }
+      if (microStatus) {
+        microStatus.mesh.rotation.y += delta * 2.2;
+        microStatus.renderer.render(microStatus.scene, microStatus.camera);
+      }
+      if (cardGeo1) {
+        cardGeo1.mesh.rotation.x += delta * 1.2;
+        cardGeo1.mesh.rotation.y += delta * 1.4;
+        cardGeo1.renderer.render(cardGeo1.scene, cardGeo1.camera);
+      }
+      if (cardGeo2) {
+        cardGeo2.mesh.rotation.y += delta * 1.0;
+        cardGeo2.mesh.rotation.z += delta * 0.8;
+        cardGeo2.renderer.render(cardGeo2.scene, cardGeo2.camera);
+      }
+      if (cardGeo3) {
+        cardGeo3.mesh.rotation.x += delta * 1.3;
+        cardGeo3.mesh.rotation.y += delta * 1.5;
+        cardGeo3.renderer.render(cardGeo3.scene, cardGeo3.camera);
+      }
+    }
+    animate();
+
+    // -------------------------------------------------------------------------
+    // 4. Interactive Simulation & API Hook
+    // -------------------------------------------------------------------------
+    function setMode(mode) {
+      const gBtn = document.getElementById('btn-adapter-graph');
+      const iBtn = document.getElementById('btn-adapter-instagrapi');
+      if (mode === 'GRAPH_API') {
+        gBtn.className = "px-3.5 py-1.5 rounded-lg font-mono text-[10px] tracking-wider transition-all bg-cyan-400 text-black font-bold shadow-lg shadow-cyan-400/20";
+        iBtn.className = "px-3.5 py-1.5 rounded-lg font-mono text-[10px] tracking-wider transition-all text-slate-400 hover:text-white";
+      } else {
+        iBtn.className = "px-3.5 py-1.5 rounded-lg font-mono text-[10px] tracking-wider transition-all bg-pink-500 text-white font-bold shadow-lg shadow-pink-500/20";
+        gBtn.className = "px-3.5 py-1.5 rounded-lg font-mono text-[10px] tracking-wider transition-all text-slate-400 hover:text-white";
+      }
+    }
+
+    function simulateCommentSpike() {
+      const btn = document.getElementById('btn-simulate');
+      const container = document.getElementById('events-container');
+      btn.innerText = "[ INGESTING_SPIKE... ]";
+      btn.disabled = true;
+
+      // Hit live backend /api/health
+      fetch('/api/health')
+        .then(res => res.json())
+        .catch(() => ({ status: 'online' }))
+        .finally(() => {
+          setTimeout(() => {
+            const users = ['creator_alex', 'cyber_dev', 'ai_lead', 'jess_builds', 'sarah_scale'];
+            const comments = [
+              'send me the course breakdown!',
+              'link for early access',
+              'can I get the prompt playbook?',
+              'how to join the vip mastermind?',
+              'link please!'
+            ];
+            const randUser = users[Math.floor(Math.random() * users.length)];
+            const randComment = comments[Math.floor(Math.random() * comments.length)];
+            const latency = Math.floor(Math.random() * 60 + 170);
+
+            const newEvent = document.createElement('div');
+            newEvent.className = "p-3.5 rounded-xl bg-slate-950/60 border border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-pulse";
+            newEvent.innerHTML = `
+              <div class="flex items-center gap-3">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping inline-block"></span>
+                <div>
+                  <span class="font-mono text-xs text-cyan-400">@${randUser}</span>
+                  <p class="text-xs text-slate-300 mt-0.5">"${randComment}"</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-3 font-mono text-[10px] text-slate-400">
+                <span class="px-2 py-0.5 rounded bg-slate-800 text-slate-300">CONF: 0.98</span>
+                <span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">DISPATCHED (${latency}ms)</span>
+              </div>
+            `;
+            container.insertBefore(newEvent, container.firstChild);
+            if (container.children.length > 5) {
+              container.removeChild(container.lastChild);
+            }
+
+            const statConversions = document.getElementById('stat-conversions');
+            statConversions.innerText = (parseInt(statConversions.innerText.replace(',', '')) + 1).toLocaleString();
+
+            btn.innerText = "[ SIMULATE_COMMENT_SPIKE ]";
+            btn.disabled = false;
+          }, 350);
+        });
+    }
+
+    // Ping backend health
+    fetch('/api/health')
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById('backend-status-indicator').innerText = `ONLINE (${data.adapter_mode.toUpperCase()})`;
+      })
+      .catch(() => {
+        document.getElementById('backend-status-indicator').innerText = 'ONLINE (LOCAL)';
+      });
+  </script>
+</body>
+</html>
